@@ -1,35 +1,81 @@
-import * as React from 'react'
-import { useListUsersQuery } from '../services/users'
-import { SimpleGrid, Box, Button } from '@chakra-ui/react'
-export default function UserList() {
+import React, { useState } from "react";
+import { SimpleGrid, useDisclosure, Spinner } from "@chakra-ui/react";
+import {
+  useListUsersQuery,
+  useDeleteUserMutation,
+  useGetUserQuery,
+} from "../services/users";
 
-  const { data, error, isLoading } = useListUsersQuery()
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
+
+import Card from "./Card";
+import Drawer from "./Drawer";
+
+import "./UserList.css";
+
+export default function UserList() {
+  const { data, error, isLoading } = useListUsersQuery();
+  const [deleteUser] = useDeleteUserMutation();
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [currentUser, setCurrentUser] = useState(0);
+  const { currentData } = useGetUserQuery(currentUser);
+
   // Individual hooks are also accessible under the generated endpoints:
 
   const invalidUser = {
-    avatar: "https://cloudflare-ipfs.com/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/226.jpg",
+    avatar:
+      "https://cloudflare-ipfs.com/ipfs/Qmd3W5DuhgHirLHGVixi6V76LhCkZUz6pnFt5AJBiyvHye/avatar/226.jpg",
     email: "kelsey.wynns@emboldhealth.com",
     firstName: "George",
     id: "invalid-id",
-    lastName: "Bluth"
-  }
+    lastName: "Bluth",
+  };
+
+  const handleDeleteUser = async (userId) => {
+    const deleteuser = await deleteUser(userId);
+
+    if (deleteuser.error) {
+      toast(deleteuser.error.data.error);
+    }
+  };
+
+  const handleViewMoreClick = (userId) => {
+    setCurrentUser(userId);
+    onOpen();
+  };
+
   return (
     <div className="userList">
       {error ? (
         <>Oh no, there was an error</>
       ) : isLoading ? (
-        <>Loading...</>
-      ) : data ? <SimpleGrid columns={2} spacing={10}>{[invalidUser, ...data].map(user => (
-        <Box>
-          <h3>{user.firstName}</h3>
-          <h5>ID: {user.id}</h5>
-          <img src={user.avatar} alt={user.firstName} />
-          <Button colorScheme='red'>Delete</Button>
-        </Box>
-
-      ))}
-      </SimpleGrid> : null}
-
+        <Spinner />
+      ) : (
+        <SimpleGrid columns={3} spacing={2} className="grid">
+          {[invalidUser, ...data].map((user) => {
+            return (
+              <div key={user.id}>
+                <Card
+                  user={user}
+                  onOpen={onOpen}
+                  handleDeleteUser={handleDeleteUser}
+                  placement="right"
+                  isOpen={isOpen}
+                  onClose={onClose}
+                  handleViewMoreClick={handleViewMoreClick}
+                />
+                <Drawer
+                  placement="right"
+                  user={currentData}
+                  isOpen={isOpen}
+                  onClose={onClose}
+                />
+              </div>
+            );
+          })}
+        </SimpleGrid>
+      )}
     </div>
-  )
+  );
 }
