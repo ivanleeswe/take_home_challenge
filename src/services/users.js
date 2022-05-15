@@ -3,7 +3,6 @@ import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react'
 // https://redux-toolkit.js.org/tutorials/rtk-query
 // Define a service using a base URL and expected endpoints
 
-
 export const baseUrl = '/api'
 export const usersUrl = '/users'
 const userTag = 'User'
@@ -17,18 +16,17 @@ function providesList(resultsWithIds, tagType) {
     : [{ type: tagType, id: 'LIST' }]
 }
 
-
 export const usersApi = createApi({
   reducerPath: 'userApi',
   baseQuery: fetchBaseQuery({ baseUrl }),
   endpoints: (builder) => ({
     listUsers: builder.query({
       query: () => usersUrl,
-      providesTags: (result) => providesList(result, 'User'),
+      providesTags: (result) => providesList(result, [userTag]),
     }),
     getUser: builder.query({
       query: (id) => `users/${id}`,
-      providesTags: (result, error, id) => [{ type: 'User', id }]
+      providesTags: (result, error, id) => [{ type: [userTag], id }]
     }),
     // deleteUser should be rewritten as mutation
     deleteUser: builder.mutation({
@@ -38,16 +36,7 @@ export const usersApi = createApi({
           method: 'DELETE',
         }
       },
-      invalidatesTags: (result, error, id) => [{ type: 'User', id }],
-    }),
-    addUser: builder.mutation({
-      query(id) {
-        return {
-          url: `users/${id}`,
-          method: 'POST',
-        }
-      },
-      invalidatesTags: [{ type: 'User', id: 'LIST' }],
+      invalidatesTags: (result, error, id) => [{ type: [userTag], id }],
     }),
   }),
 })
